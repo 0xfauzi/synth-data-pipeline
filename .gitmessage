@@ -1,0 +1,15 @@
+Initial commit: Synthetic Data Pipeline
+
+A flexible, reusable pipeline for generating synthetic training data using LLMs.
+
+Features:
+- Schema-driven generation and judging
+- Multi-provider support (OpenAI, Anthropic, local models)
+- Built-in quality control (validation, deduplication, label triage)
+- Configurable via TOML
+- Modern Python with UV package manager
+- Production-ready with logging and error handling
+
+Example configurations included for:
+- LinkedIn cringe detection (multi-label classification)
+- Ready to extend for other tasks

@@ -1,0 +1,207 @@
+[task]
+name = "linkedin_cringe_detector"
+type = "multi_label"
+labels = [
+    "humbleBragging",
+    "excessiveEmojis",
+    "engagementBait",
+    "fakeStories",
+    "companyCulture",
+    "personalAnecdotes",
+    "hiringStories",
+    "basicDecencyPraising",
+    "minorAchievements",
+    "buzzwordOveruse",
+    "linkedinCliches",
+    "virtueSignaling",
+    "professionalOversharing",
+    "mundaneLifeLessons"
+]
+
+[schemas.generation]
+type = "object"
+required = ["text", "industry", "role", "emoji_count", "hashtags"]
+additionalProperties = false
+
+[schemas.generation.properties.text]
+type = "string"
+minLength = 120
+maxLength = 2500
+
+[schemas.generation.properties.industry]
+type = "string"
+
+[schemas.generation.properties.role]
+type = "string"
+
+[schemas.generation.properties.emoji_count]
+type = "integer"
+minimum = 0
+maximum = 20
+
+[schemas.generation.properties.hashtags]
+type = "array"
+maxItems = 4
+
+[schemas.generation.properties.hashtags.items]
+type = "string"
+
+[schemas.judgment]
+type = "object"
+required = ["cringe_prob", "labels", "top_reasons"]
+additionalProperties = false
+
+[schemas.judgment.properties.cringe_prob]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels]
+type = "object"
+additionalProperties = false
+
+[schemas.judgment.properties.labels.properties.humbleBragging]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.excessiveEmojis]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.engagementBait]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.fakeStories]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.companyCulture]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.personalAnecdotes]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.hiringStories]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.basicDecencyPraising]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.minorAchievements]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.buzzwordOveruse]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.linkedinCliches]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.virtueSignaling]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.professionalOversharing]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.mundaneLifeLessons]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.top_reasons]
+type = "array"
+maxItems = 3
+
+[schemas.judgment.properties.top_reasons.items]
+type = "string"
+
+[prompts.generator]
+system = """You write realistic LinkedIn posts.
+Rules:
+- 120–220 words, first-person, business voice
+- Include specific details based on the given parameters
+- Make posts believable and varied
+- Follow any specific style hints provided
+Return JSON that matches the provided schema. No extra text."""
+
+user_template = """Industry: {industry}
+Role: {role}
+Style hints: {style_hints}
+Write ONE LinkedIn post and return JSON only."""
+
+[prompts.judge]
+system = """You are a strict LinkedIn 'cringe' judge.
+For the input post, return:
+- cringe_prob in [0,1]: overall cringe probability
+- per-label probabilities in [0,1] for each label (independent, do NOT sum to 1)
+- up to 3 short reasons for your judgment
+
+Be consistent but nuanced. Not everything needs high scores.
+Follow the provided JSON schema. JSON only."""
+
+[models.generator]
+provider = "openai"
+name = "gpt-4"
+temperature = 0.9
+
+[models.judge]
+provider = "openai"
+name = "gpt-4"
+temperature = 0.2
+
+[pipeline]
+batch_size = 10
+dedup_threshold = 0.9
+validation_strict = true
+triage_labels = true
+balance_labels = true
+val_ratio = 0.15
+test_ratio = 0.15
+
+[generation_parameters]
+industries = [
+    "FinTech",
+    "HealthTech",
+    "Marketing",
+    "DeveloperTools",
+    "Consulting",
+    "Education"
+]
+roles = [
+    "PM",
+    "Founder",
+    "Engineer",
+    "Recruiter",
+    "Designer",
+    "Executive"
+]
+style_variations = [
+    "excessiveEmojis and engagementBait",
+    "humbleBragging",
+    "linkedinCliches and buzzwordOveruse",
+    "personalAnecdotes and mundaneLifeLessons",
+    "fakeStories",
+    "normal professional post"
+]
