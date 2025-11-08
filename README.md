@@ -179,13 +179,3 @@ pytest tests/test_generators.py
 
 MIT
 
-## Citation
-
-If you use this pipeline in your research, please cite:
-```bibtex
-@software{synth_data_pipeline,
-  title = {Synthetic Data Pipeline},
-  year = {2024},
-  url = {https://github.com/yourusername/synth-data-pipeline}
-}
-```
