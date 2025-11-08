@@ -9,6 +9,10 @@ DEFAULT_PAIRWISE_SCHEMA: Dict[str, Any] = {
     "required": ["preferred", "confidence", "reason"],
     "additionalProperties": False,
     "properties": {
+        "label": {
+            "type": "string",
+            "default": "overall",
+        },
         "preferred": {"type": "string", "enum": ["A", "B", "tie"]},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "reason": {"type": "string"},
@@ -63,11 +67,14 @@ class PairwiseJudge:
         candidate_a: Dict[str, Any],
         candidate_b: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
+        label: Optional[str] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "candidate_a": candidate_a,
             "candidate_b": candidate_b,
         }
+        if label:
+            payload["label"] = label
         if context:
             payload.update({f"context_{k}": v for k, v in context.items()})
         result = self.judge.judge_single(payload)

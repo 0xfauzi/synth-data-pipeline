@@ -7,20 +7,26 @@ logger = logging.getLogger(__name__)
 class LabelTriager:
     """Detect potential label quality issues."""
     
-    def __init__(self, threshold: float = 0.5):
+    def __init__(self, threshold: float = 0.5, engine: str = "cleanlab"):
         self.threshold = threshold
+        self.engine = engine
         self.stats = {"total": 0, "flagged": 0}
-    
+
     def find_issues(self, rows: List[Dict[str, Any]], labels: Optional[List[str]] = None) -> List[int]:
         """Find rows with potential label issues."""
+        if not rows:
+            return []
+
+        if self.engine != "cleanlab":
+            logger.info("Label triage engine '%s' not implemented, skipping triage.", self.engine)
+            return []
+
         try:
             from cleanlab.multilabel_classification import find_label_issues
         except ImportError:
             logger.warning("Cleanlab not installed, skipping label triage")
             return []
-        
-        if not rows:
-            return []
+
         
         # Extract labels and probabilities
         if labels is None:

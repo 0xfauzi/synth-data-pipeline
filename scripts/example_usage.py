@@ -21,7 +21,8 @@ def main():
         # These kwargs get passed to the generator
         industry="FinTech",
         role="PM",
-        style_hints="humbleBragging and buzzwordOveruse"
+        style_id="humblebrag_only",
+        length_bucket="long"
     )
     
     # Load and inspect results

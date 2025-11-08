@@ -21,23 +21,60 @@ def cli():
     """Synthetic Data Pipeline CLI."""
     pass
 
+def _collect_overrides(**kwargs):
+    overrides = {}
+    for key, value in kwargs.items():
+        if value is None:
+            continue
+        overrides[key] = value
+    return overrides
+
+
 @cli.command()
 @click.option('--config', '-c', required=True, help='Path to config TOML file')
 @click.option('--output', '-o', default='data/output', help='Output directory')
 @click.option('--samples', '-n', default=100, help='Number of samples to generate')
-def run(config, output, samples):
+@click.option('--industry', type=str, help='Override industry sampling')
+@click.option('--role', type=str, help='Override role sampling')
+@click.option('--style-id', type=str, help='Force a specific style preset')
+@click.option('--length-bucket', type=str, help='Force a specific length bucket')
+@click.option('--hashtags', multiple=True, help='Override hashtags (repeatable)')
+@click.option('--seed', type=int, help='Set fixed generation seed')
+def run(config, output, samples, industry, role, style_id, length_bucket, hashtags, seed):
     """Run complete pipeline."""
     pipeline = Pipeline(config)
-    pipeline.run(samples, output)
+    overrides = _collect_overrides(
+        industry=industry,
+        role=role,
+        style_id=style_id,
+        length_bucket=length_bucket,
+        seed=seed,
+        hashtags=list(hashtags) if hashtags else None,
+    )
+    pipeline.run(samples, output, **overrides)
 
 @cli.command()
 @click.option('--config', '-c', required=True, help='Path to config TOML file')
 @click.option('--output', '-o', required=True, help='Output file path')
 @click.option('--samples', '-n', default=100, help='Number of samples to generate')
-def generate(config, output, samples):
+@click.option('--industry', type=str, help='Override industry sampling')
+@click.option('--role', type=str, help='Override role sampling')
+@click.option('--style-id', type=str, help='Force a specific style preset')
+@click.option('--length-bucket', type=str, help='Force a specific length bucket')
+@click.option('--hashtags', multiple=True, help='Override hashtags (repeatable)')
+@click.option('--seed', type=int, help='Set fixed generation seed')
+def generate(config, output, samples, industry, role, style_id, length_bucket, hashtags, seed):
     """Generate synthetic examples only."""
     pipeline = Pipeline(config)
-    pipeline.generate(samples, output)
+    overrides = _collect_overrides(
+        industry=industry,
+        role=role,
+        style_id=style_id,
+        length_bucket=length_bucket,
+        seed=seed,
+        hashtags=list(hashtags) if hashtags else None,
+    )
+    pipeline.generate(samples, output, **overrides)
 
 @cli.command()
 @click.option('--config', '-c', required=True, help='Path to config TOML file')

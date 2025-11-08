@@ -1,0 +1,650 @@
+[task]
+name = "linkedin_cringe_detector"
+type = "multi_label"
+labels = [
+    "humbleBragging",
+    "excessiveEmojis",
+    "engagementBait",
+    "fakeStories",
+    "companyCulture",
+    "personalAnecdotes",
+    "hiringStories",
+    "basicDecencyPraising",
+    "minorAchievements",
+    "buzzwordOveruse",
+    "linkedinCliches",
+    "virtueSignaling",
+    "professionalOversharing",
+    "mundaneLifeLessons"
+]
+
+[schemas.generation]
+type = "object"
+required = [
+    "text",
+    "opening_hook",
+    "industry",
+    "role",
+    "emoji_count",
+    "hashtags",
+    "cta_present",
+    "cliche_count",
+    "buzzword_count",
+    "has_explicit_humility_phrase",
+    "story_claims_verifiable",
+    "length_bucket",
+    "language",
+    "prompt_id",
+    "style_id",
+    "seed",
+    "response_schema_version"
+]
+additionalProperties = false
+
+[schemas.generation.properties.text]
+type = "string"
+minLength = 100
+maxLength = 3000
+
+[schemas.generation.properties.opening_hook]
+type = "string"
+minLength = 1
+maxLength = 200
+
+[schemas.generation.properties.industry]
+type = "string"
+
+[schemas.generation.properties.role]
+type = "string"
+
+[schemas.generation.properties.emoji_count]
+type = "integer"
+minimum = 0
+maximum = 20
+
+[schemas.generation.properties.hashtags]
+type = "array"
+maxItems = 4
+
+[schemas.generation.properties.hashtags.items]
+type = "string"
+
+[schemas.generation.properties.cta_present]
+type = "boolean"
+
+[schemas.generation.properties.cliche_count]
+type = "integer"
+minimum = 0
+maximum = 10
+
+[schemas.generation.properties.buzzword_count]
+type = "integer"
+minimum = 0
+maximum = 20
+
+[schemas.generation.properties.has_explicit_humility_phrase]
+type = "boolean"
+
+[schemas.generation.properties.story_claims_verifiable]
+type = "boolean"
+
+[schemas.generation.properties.length_bucket]
+type = "string"
+enum = ["short", "medium", "long", "max"]
+
+[schemas.generation.properties.language]
+type = "string"
+enum = ["en"]
+
+[schemas.generation.properties.prompt_id]
+type = "string"
+
+[schemas.generation.properties.style_id]
+type = "string"
+
+[schemas.generation.properties.seed]
+type = "integer"
+minimum = 0
+
+[schemas.generation.properties.response_schema_version]
+type = "string"
+
+[schemas.judgment]
+type = "object"
+required = [
+    "cringe_prob",
+    "labels",
+    "top_reasons",
+    "judge_meta",
+    "prompt_id",
+    "style_id",
+    "seed",
+    "response_schema_version"
+]
+additionalProperties = false
+
+[schemas.judgment.properties.cringe_prob]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels]
+type = "object"
+additionalProperties = false
+
+[schemas.judgment.properties.labels.properties.humbleBragging]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.excessiveEmojis]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.engagementBait]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.fakeStories]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.companyCulture]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.personalAnecdotes]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.hiringStories]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.basicDecencyPraising]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.minorAchievements]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.buzzwordOveruse]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.linkedinCliches]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.virtueSignaling]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.professionalOversharing]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.labels.properties.mundaneLifeLessons]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.label_rationales]
+type = "object"
+additionalProperties = false
+
+[schemas.judgment.properties.label_rationales.properties.humbleBragging]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.excessiveEmojis]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.engagementBait]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.fakeStories]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.companyCulture]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.personalAnecdotes]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.hiringStories]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.basicDecencyPraising]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.minorAchievements]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.buzzwordOveruse]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.linkedinCliches]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.virtueSignaling]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.professionalOversharing]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.label_rationales.properties.mundaneLifeLessons]
+type = "string"
+maxLength = 140
+
+[schemas.judgment.properties.top_reasons]
+type = "array"
+maxItems = 3
+
+[schemas.judgment.properties.top_reasons.items]
+type = "string"
+maxLength = 180
+
+[schemas.judgment.properties.judge_meta]
+type = "object"
+required = ["model", "temperature", "num_samples", "seed", "aggregation"]
+additionalProperties = false
+
+[schemas.judgment.properties.judge_meta.properties.model]
+type = "string"
+
+[schemas.judgment.properties.judge_meta.properties.temperature]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.judgment.properties.judge_meta.properties.num_samples]
+type = "integer"
+minimum = 1
+maximum = 8
+
+[schemas.judgment.properties.judge_meta.properties.seed]
+type = "integer"
+minimum = 0
+
+[schemas.judgment.properties.judge_meta.properties.aggregation]
+type = "string"
+enum = ["median"]
+
+[schemas.judgment.properties.prompt_id]
+type = "string"
+
+[schemas.judgment.properties.style_id]
+type = "string"
+
+[schemas.judgment.properties.seed]
+type = "integer"
+minimum = 0
+
+[schemas.judgment.properties.response_schema_version]
+type = "string"
+
+[schemas.judgment.properties.calibration_applied]
+type = "boolean"
+
+[schemas.judgment.properties.calibration_version]
+type = "string"
+
+[schemas.pairwise]
+type = "object"
+required = ["label", "preferred", "confidence", "reason"]
+additionalProperties = false
+
+[schemas.pairwise.properties.label]
+type = "string"
+enum = [
+    "overall",
+    "humbleBragging",
+    "excessiveEmojis",
+    "engagementBait",
+    "fakeStories",
+    "companyCulture",
+    "personalAnecdotes",
+    "hiringStories",
+    "basicDecencyPraising",
+    "minorAchievements",
+    "buzzwordOveruse",
+    "linkedinCliches",
+    "virtueSignaling",
+    "professionalOversharing",
+    "mundaneLifeLessons"
+]
+
+[schemas.pairwise.properties.preferred]
+type = "string"
+enum = ["A", "B", "tie"]
+
+[schemas.pairwise.properties.confidence]
+type = "number"
+minimum = 0
+maximum = 1
+
+[schemas.pairwise.properties.reason]
+type = "string"
+maxLength = 200
+
+[schemas.pairwise.properties.prompt_id]
+type = "string"
+
+[schemas.pairwise.properties.style_id]
+type = "string"
+
+[schemas.pairwise.properties.response_schema_version]
+type = "string"
+
+[prompts.generator]
+system = """You write realistic LinkedIn posts with controllable style knobs.
+Rules:
+- Obey the JSON schema exactly. No additional keys or text outside JSON.
+- Use the provided metadata (industry, role, style knobs) to ground specific details.
+- Produce first-person business voice with credible anecdotes or data.
+- Ensure the opening_hook is a compelling first line ≤ 200 characters that would appear before “see more”.
+- Match the requested length_bucket:
+  • short: 100–300 characters
+  • medium: 300–900 characters
+  • long: 900–1,800 characters
+  • max: 1,800–3,000 characters
+- Balance CTA usage, clichés, buzzwords, humility phrases, and story verifiability according to the knob values.
+- Return hashtags as lowercase tokens without the leading # symbol.
+- Populate prompt_id, style_id, seed, language, and response_schema_version fields for reproducibility."""
+user_template = """{
+  "prompt_id": "{prompt_id}",
+  "style_id": "{style_id}",
+  "industry": "{industry}",
+  "role": "{role}",
+  "language": "en",
+  "length_bucket": "{length_bucket}",
+  "cta_present": {cta_present},
+  "has_explicit_humility_phrase": {has_explicit_humility_phrase},
+  "story_claims_verifiable": {story_claims_verifiable},
+  "cliche_count": {cliche_count},
+  "buzzword_count": {buzzword_count},
+  "emoji_count": {emoji_count},
+  "hashtags": {hashtags},
+  "seed": {seed},
+  "response_schema_version": "{response_schema_version}"
+}
+Generate one LinkedIn post that conforms to the schema. JSON only."""
+
+[prompts.judge]
+system = """You are a strict LinkedIn “cringe” judge.
+Instructions:
+- Score each label independently; probabilities do NOT need to sum to 1.
+- Ground every decision in evidence present in the text; ignore superficial formatting tricks alone.
+- Provide up to three concise global top_reasons (≤180 characters) highlighting the strongest signals.
+- Populate label_rationales when a label is materially activated or confidently negative (probability ≥0.6 or ≤0.1).
+- Fill judge_meta with your model name, temperature, num_samples, seed, and aggregation strategy.
+- Return valid JSON only, matching the schema exactly."""
+user_template = """Evaluate the LinkedIn post below for cringe signals.
+Metadata:
+- prompt_id: {prompt_id}
+- style_id: {style_id}
+- generator_seed: {seed}
+
+Post:
+{text}
+
+Return JSON only with the required fields."""
+
+[prompts.judge_pairwise]
+system = """You compare two LinkedIn posts only when the pointwise scores are inconclusive.
+Focus on the specified label and decide which post is more cringe, or tie if indistinguishable."""
+user_template = """Label under review: {label}
+
+Post A:
+{candidate_a}
+
+Post B:
+{candidate_b}
+
+Return JSON with fields:
+- preferred: "A", "B", or "tie"
+- confidence: probability in [0,1]
+- reason: short explanation grounded in the text."""
+
+[models.generator]
+provider = "gemini"
+name = "gemini-2.5-pro-latest"
+temperature = 0.65
+
+[models.generator.options]
+max_output_tokens = 2200
+top_p = 0.9
+
+[models.generator_backoff]
+retry_limit = 3
+initial_delay_ms = 500
+jitter = true
+
+[models.generator_backup]
+provider = "anthropic"
+name = "claude-4.5-sonnet"
+temperature = 0.6
+
+[models.generator_backup.options]
+max_output_tokens = 2200
+
+[models.judge]
+provider = "openai"
+name = "gpt-4.1"
+temperature = 0.25
+num_samples = 3
+aggregation = "median"
+
+[models.judge.options]
+max_output_tokens = 900
+top_p = 0.9
+seed = 17
+
+[models.judge_backup]
+provider = "openrouter"
+name = "prometheus-2"
+temperature = 0.2
+
+[models.judge_backup.options]
+max_output_tokens = 800
+
+[models.judge.pairwise]
+enabled = true
+provider = "anthropic"
+name = "claude-4.5-sonnet"
+temperature = 0.2
+num_samples = 1
+
+[models.judge.pairwise.options]
+max_output_tokens = 600
+
+[models.judge.pairwise.trigger_policy]
+score_margin = 0.06
+threshold_window = 0.05
+labels = ["overall"]
+
+[pipeline]
+batch_size = 32
+validation_strict = true
+triage_labels = true
+triage_engine = "cleanlab"
+balance_labels = true
+pointwise_primary = true
+enable_pairwise_gate = true
+dedup_threshold = 0.89
+
+[pipeline.cleaning]
+clean_text = true
+unicode_normalize = true
+boilerplate_ruleset = "default"
+
+[pipeline.dedup]
+method = "minhash_lsh"
+n_gram = 5
+num_perm = 128
+shingle_level = "word"
+
+[pipeline.calibration]
+enabled = true
+method = "platt"
+per_label = true
+dev_set = "real_only"
+
+[pipeline.splits]
+val_ratio = 0.15
+test_ratio = 0.15
+holdout_source = "real_only"
+
+[pipeline.emoji_density]
+compute = true
+normalization = "per_word"
+
+[pipeline.metadata]
+record_prompt = true
+record_style = true
+record_model_versions = true
+
+[generation_parameters]
+response_schema_version = "2025-11-01"
+
+[generation_parameters.length_buckets.short]
+min_chars = 100
+max_chars = 300
+weight = 0.2
+
+[generation_parameters.length_buckets.medium]
+min_chars = 300
+max_chars = 900
+weight = 0.45
+
+[generation_parameters.length_buckets.long]
+min_chars = 900
+max_chars = 1800
+weight = 0.25
+
+[generation_parameters.length_buckets.max]
+min_chars = 1800
+max_chars = 3000
+weight = 0.1
+
+[generation_parameters.industries]
+values = [
+    "FinTech",
+    "HealthTech",
+    "Marketing",
+    "DeveloperTools",
+    "Consulting",
+    "Education"
+]
+
+[generation_parameters.roles]
+values = [
+    "PM",
+    "Founder",
+    "Engineer",
+    "Recruiter",
+    "Designer",
+    "Executive"
+]
+
+[generation_parameters.styles.engagement_bait_emojis]
+style_id = "engagement_bait_emojis"
+cta_present = true
+emoji_count = 7
+cliche_count = 1
+buzzword_count = 3
+has_explicit_humility_phrase = false
+story_claims_verifiable = false
+length_bucket = "medium"
+
+[generation_parameters.styles.humblebrag_only]
+style_id = "humblebrag_only"
+cta_present = false
+emoji_count = 1
+cliche_count = 0
+buzzword_count = 2
+has_explicit_humility_phrase = true
+story_claims_verifiable = true
+length_bucket = "long"
+
+[generation_parameters.styles.linkedin_cliche_buzz]
+style_id = "linkedin_cliche_buzz"
+cta_present = true
+emoji_count = 2
+cliche_count = 4
+buzzword_count = 8
+has_explicit_humility_phrase = false
+story_claims_verifiable = false
+length_bucket = "medium"
+
+[generation_parameters.styles.personal_story_lesson]
+style_id = "personal_story_lesson"
+cta_present = false
+emoji_count = 0
+cliche_count = 1
+buzzword_count = 1
+has_explicit_humility_phrase = false
+story_claims_verifiable = true
+length_bucket = "long"
+
+[generation_parameters.styles.fake_hero_story]
+style_id = "fake_hero_story"
+cta_present = true
+emoji_count = 3
+cliche_count = 2
+buzzword_count = 5
+has_explicit_humility_phrase = false
+story_claims_verifiable = false
+length_bucket = "max"
+
+[generation_parameters.styles.genuine_professional]
+style_id = "genuine_professional"
+cta_present = false
+emoji_count = 0
+cliche_count = 0
+buzzword_count = 0
+has_explicit_humility_phrase = false
+story_claims_verifiable = true
+length_bucket = "medium"
+
+[generation_parameters.hashtags.default]
+values = [
+    ["careerdevelopment", "leadership"],
+    ["product", "saas"],
+    ["hiring", "growth"],
+    ["wellbeing"],
+    ["teamculture", "innovation"]
+]
+
+[generation_parameters.sampling]
+shuffle_styles = true
+ensure_label_coverage = true
+real_data_mix_ratio = 0.2
+
+

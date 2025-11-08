@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from statistics import fmean
+from statistics import fmean, median
 from typing import Any, Dict, List, Optional
 
 from jsonschema import ValidationError, validate
@@ -25,6 +25,7 @@ class LLMJudge(BaseJudge):
         num_samples: int = 2,
         api_key: Optional[str] = None,
         config: Optional[Dict[str, Any]] = None,
+        aggregation: str = "mean",
     ):
         super().__init__(schema, config)
         self.system_prompt = system_prompt
@@ -32,6 +33,7 @@ class LLMJudge(BaseJudge):
         self.provider = provider.lower()
         self.model = model
         self.temperature = temperature
+        self.aggregation = aggregation.lower() if aggregation else "mean"
 
         cfg = config or {}
         self.num_samples = max(1, cfg.get("num_samples", num_samples))
@@ -54,17 +56,39 @@ class LLMJudge(BaseJudge):
         self.safety_settings = cfg.get("safety_settings")
         self.max_retries = cfg.get("max_retries", 2)
         self.response_schema = cfg.get("response_schema", self.schema)
+        self.base_url = cfg.get("base_url")
+        self.default_headers = cfg.get("default_headers")
+        self.organization = cfg.get("organization")
 
         self._init_client(api_key)
 
     def _init_client(self, api_key: Optional[str]) -> None:
-        if self.provider == "openai":
+        if self.provider == "openrouter":
+            from openai import OpenAI
+
+            key = api_key or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+            if not key:
+                raise ValueError("OpenRouter API key not provided")
+            base_url = self.base_url or os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+            headers = dict(self.default_headers or {})
+            headers.setdefault("HTTP-Referer", os.getenv("OPENROUTER_REFERRER", "synth-data-pipeline"))
+            headers.setdefault("X-Title", os.getenv("OPENROUTER_TITLE", "synth-data-pipeline"))
+            self.client = OpenAI(api_key=key, base_url=base_url, default_headers=headers)
+            self.provider = "openai"
+        elif self.provider == "openai":
             from openai import OpenAI
 
             key = api_key or os.getenv("OPENAI_API_KEY")
             if not key:
                 raise ValueError("OpenAI API key not provided")
-            self.client = OpenAI(api_key=key)
+            client_kwargs: Dict[str, Any] = {}
+            if self.base_url:
+                client_kwargs["base_url"] = self.base_url
+            if self.organization:
+                client_kwargs["organization"] = self.organization
+            if self.default_headers:
+                client_kwargs["default_headers"] = self.default_headers
+            self.client = OpenAI(api_key=key, **client_kwargs)
         elif self.provider == "anthropic":
             from anthropic import Anthropic
 
@@ -135,7 +159,17 @@ class LLMJudge(BaseJudge):
         if not samples:
             raise ValueError("All judge attempts failed to produce valid output.")
 
-        aggregated = aggregate_schema_values(samples, self.schema)
+        aggregated = aggregate_schema_values(samples, self.schema, aggregation=self.aggregation)
+        aggregated.setdefault("judge_meta", {})
+        aggregated["judge_meta"].update(
+            {
+                "model": self.model,
+                "temperature": self.temperature,
+                "num_samples": len(samples),
+                "seed": self.extra_params.get("seed"),
+                "aggregation": self.aggregation,
+            }
+        )
         validate(instance=aggregated, schema=self.schema)
         return aggregated
 
@@ -255,7 +289,17 @@ class LLMJudge(BaseJudge):
 
         raise ValueError("Gemini judge response did not contain JSON content.")
 
-def aggregate_schema_values(values: List[Any], schema_fragment: Optional[Dict[str, Any]]) -> Any:
+def _reduce_numeric(values: List[float], aggregation: str) -> float:
+    if aggregation == "median":
+        return float(median(values))
+    return float(fmean(values))
+
+
+def aggregate_schema_values(
+    values: List[Any],
+    schema_fragment: Optional[Dict[str, Any]],
+    aggregation: str = "mean",
+) -> Any:
     if not values:
         return None
 
@@ -272,7 +316,7 @@ def aggregate_schema_values(values: List[Any], schema_fragment: Optional[Dict[st
             child_values = [value[key] for value in values if isinstance(value, dict) and key in value]
             if not child_values:
                 continue
-            result[key] = aggregate_schema_values(child_values, child_schema)
+            result[key] = aggregate_schema_values(child_values, child_schema, aggregation=aggregation)
         return result
 
     if schema_type == "array" or (schema_type is None and isinstance(values[0], list)):
@@ -292,7 +336,7 @@ def aggregate_schema_values(values: List[Any], schema_fragment: Optional[Dict[st
         numeric = [float(v) for v in values if isinstance(v, (int, float))]
         if not numeric:
             return values[-1]
-        value: float = fmean(numeric)
+        value: float = _reduce_numeric(numeric, aggregation.lower())
         minimum = (schema_fragment or {}).get("minimum")
         maximum = (schema_fragment or {}).get("maximum")
         if minimum is not None:
