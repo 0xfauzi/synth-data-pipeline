@@ -34,6 +34,9 @@ def main():
             print(f"\nExample {i+1}:")
             print(f"Text: {example['generated']['text'][:200]}...")
             print(f"Labels: {example['judgment']['labels']}")
+            pairwise = example.get("pairwise")
+            if pairwise:
+                print(f"Pairwise metadata: {pairwise}")
 
 if __name__ == "__main__":
     main()

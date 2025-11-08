@@ -1,6 +1,6 @@
 import random
 import logging
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)

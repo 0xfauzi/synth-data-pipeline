@@ -5,8 +5,9 @@ A flexible, reusable pipeline for generating synthetic training data using LLMs.
 ## Features
 
 - **Schema-Driven**: Define your data structure with JSON schemas
-- **Multi-Provider Support**: Works with OpenAI, Anthropic, or local models (via Outlines)
-- **Quality Control**: Built-in validation, deduplication, and label issue detection
+- **Arena-Proven Models**: Built-in adapters for Gemini 2.5 Pro, Claude 4.5, GPT-4.1, Qwen2.5, and Prometheus 2
+- **Bias-Resistant Judging**: Multi-sample scoring, optional pairwise tiebreaks, and cross-family model support
+- **Quality Control**: Validation, cleaning, deduplication, label triage, and probability calibration helpers
 - **Configurable**: Swap components, prompts, and strategies via TOML configs
 - **Production Ready**: Logging, error handling, and batch processing
 
@@ -34,11 +35,25 @@ uv run synth-pipeline run --config configs/my_task.toml --output data/my_dataset
 uv run synth-pipeline generate --config configs/my_task.toml --num-samples 1000
 uv run synth-pipeline judge --config configs/my_task.toml --input data/generated.jsonl
 uv run synth-pipeline process --config configs/my_task.toml --input data/judged.jsonl
+
+# 7. (Optional) Calibrate probabilities with human labels
+uv run synth-pipeline calibrate \
+  --config configs/my_task.toml \
+  --judged data/my_dataset/judged.jsonl \
+  --ground-truth data/my_dataset/human_labels.jsonl \
+  --output data/my_dataset/judged_calibrated.jsonl
 ```
 
 ## Architecture
 
 ```
+
+## Recommended Model Recipes (Nov 2025)
+
+- **API-first**: `Gemini 2.5 Pro` (generator) with a `Claude 4.5 Sonnet` backup plus `GPT-4.1` for judging (two samples averaged) and `Claude 4.5 Sonnet` for pairwise tiebreaks. All three support JSON-schema output/tool schemas and keep generator/judge families distinct to reduce bias.
+- **Fully open-source**: `Qwen2.5-72B-Instruct` via Outlines for generation + `Prometheus 2 (7B)` for judging. Pairwise resolution can be skipped or delegated to a lightweight API model if desired.
+
+Both recipes align with the latest Chatbot Arena, G-Eval, and Prometheus 2 research cited by LMSYS, Anthropic, and EMNLP 2024/2025 studies. The example configs under `configs/examples/` encode these defaults.
 Generate (LLM creates examples matching schema)
     ↓
 Judge (Another LLM assigns labels/scores)
@@ -79,14 +94,43 @@ user_template = "Generate an example with: {parameters}"
 
 [prompts.judge]
 system = "Your judging instructions..."
+user_template = "Score this example: {text}"
 
 [models.generator]
-provider = "openai"  # or "anthropic", "outlines"
-name = "gpt-4"
+provider = "gemini"  # gemini, openai, anthropic, outlines
+name = "gemini-2.5-pro-latest"
+temperature = 0.7
+
+[models.generator.options]
+max_output_tokens = 1800
+
+[models.generator_backup]
+provider = "anthropic"
+name = "claude-4.5-sonnet"
+temperature = 0.7
+
+[models.generator_backup.options]
+max_output_tokens = 2000
 
 [models.judge]
-provider = "openai"
-name = "gpt-4"
+provider = "openai"  # openai, anthropic, gemini, prometheus
+name = "gpt-4.1"
+temperature = 0.3
+num_samples = 2
+
+[models.judge.options]
+max_output_tokens = 900
+top_p = 0.9
+
+[models.judge.pairwise]
+enabled = true
+provider = "anthropic"
+name = "claude-4.5-sonnet"
+temperature = 0.3
+
+[schemas.pairwise]
+type = "object"
+required = ["preferred", "confidence", "reason"]
 
 [pipeline]
 dedup_threshold = 0.9
@@ -97,26 +141,29 @@ balance_labels = true
 ## Components
 
 ### Generators
-- `OpenAIGenerator`: Uses OpenAI's structured outputs
-- `AnthropicGenerator`: Uses Claude's structured generation  
-- `OutlinesGenerator`: Local models with schema constraints
-- `TemplateGenerator`: Rule-based generation for simple cases
+- `GeminiGenerator`: Gemini 2.5 with JSON Schema mode
+- `OpenAIGenerator`: GPT-4.1/4.1-mini structured outputs
+- `AnthropicGenerator`: Claude 4.1 structured tool outputs  
+- `OutlinesGenerator`: Local models (e.g., Qwen2.5) with schema constraints
 
 ### Judges
-- `LLMJudge`: Uses any LLM for labeling
+- `LLMJudge`: GPT-4.x, Claude, or Gemini with structured JSON + multi-sample averaging
+- `PrometheusJudge`: Local Prometheus 2 evaluator via Transformers
+- `PairwiseJudge`: Optional pairwise tiebreaks (G-Eval style prompts)
 - `EnsembleJudge`: Combines multiple judges
-- `HeuristicJudge`: Rule-based labeling
 
 ### Processors
 - `Validator`: Schema and content validation
 - `Deduplicator`: MinHash-based near-duplicate removal
 - `LabelTriager`: Detects label quality issues
 - `DataSplitter`: Stratified train/val/test splits
+- `ProbabilityCalibrator`: Fits isotonic/Platt scaling from human labels
 
 ## Examples
 
 See `configs/examples/` for complete configurations:
 - `linkedin_cringe.toml`: Multi-label social media classification
+- `linkedin_cringe_open.toml`: Fully open-source (Qwen + Prometheus) variant
 - `customer_intent.toml`: Multi-class intent classification
 - `toxicity_scoring.toml`: Regression for content moderation
 - `code_quality.toml`: Multi-aspect code evaluation
@@ -153,6 +200,21 @@ pipeline = Pipeline(config)
 pipeline.add_hook('post_generate', my_custom_function)
 pipeline.run()
 ```
+
+### Probability Calibration
+
+Once you have a small batch of human-labeled data, calibrate model probabilities so that a score like `0.7` really means ~70% positive:
+
+```bash
+uv run synth-pipeline calibrate \
+  --config configs/my_task.toml \
+  --judged data/my_dataset/judged.jsonl \
+  --ground-truth data/my_dataset/human_labels.jsonl \
+  --output data/my_dataset/judged_calibrated.jsonl \
+  --method isotonic
+```
+
+The command writes calibrated judgments plus a `*.calibration.json` file you can load later with `ProbabilityCalibrator.load`.
 
 ## Testing
 

@@ -1,5 +1,5 @@
 [task]
-name = "linkedin_cringe_detector"
+name = "linkedin_cringe_detector_local"
 type = "multi_label"
 labels = [
     "humbleBragging",
@@ -137,23 +137,6 @@ maxItems = 3
 [schemas.judgment.properties.top_reasons.items]
 type = "string"
 
-[schemas.pairwise]
-type = "object"
-required = ["preferred", "confidence", "reason"]
-additionalProperties = false
-
-[schemas.pairwise.properties.preferred]
-type = "string"
-enum = ["A", "B", "tie"]
-
-[schemas.pairwise.properties.confidence]
-type = "number"
-minimum = 0
-maximum = 1
-
-[schemas.pairwise.properties.reason]
-type = "string"
-
 [prompts.generator]
 system = """You write realistic LinkedIn posts.
 Rules:
@@ -172,78 +155,41 @@ Write ONE LinkedIn post and return JSON only."""
 system = """You are a strict LinkedIn 'cringe' judge.
 For the input post, return:
 - cringe_prob in [0,1]: overall cringe probability
-- per-label probabilities in [0,1] for each label (independent, do NOT sum to 1)
+- per-label probabilities in [0,1] for each label
 - up to 3 short reasons for your judgment
-
-Be consistent but nuanced. Not everything needs high scores.
-Follow the provided JSON schema. JSON only."""
-user_template = """Evaluate the following LinkedIn post against each cringe label.
+Respond with JSON only."""
+user_template = """Evaluate the following LinkedIn post.
 
 Post:
 {text}
 
-Return JSON only with:
-- cringe_prob: probability in [0,1]
-- labels: per-label probabilities in [0,1]
-- top_reasons: up to 3 concise bullet points
+Output JSON containing:
+- cringe_prob
+- labels
+- top_reasons
 """
 
-[prompts.judge_pairwise]
-system = """You are resolving borderline cases by comparing two LinkedIn posts. Decide which post is more likely to be cringe according to the rubric."""
-user_template = """Post A:
-{candidate_a}
-
-Post B:
-{candidate_b}
-
-Return JSON with fields:
-- preferred: "A", "B", or "tie"
-- confidence: probability in [0,1]
-- reason: short explanation."""
-
 [models.generator]
-provider = "gemini"
-name = "gemini-2.5-pro-latest"
-temperature = 0.7
+provider = "outlines"
+name = "Qwen/Qwen2.5-72B-Instruct"
+temperature = 0.8
+backend = "transformers"
 
 [models.generator.options]
-max_output_tokens = 1800
-top_p = 0.9
-
-[models.generator_backup]
-provider = "anthropic"
-name = "claude-4.5-sonnet"
-temperature = 0.7
-
-[models.generator_backup.options]
-max_output_tokens = 2000
+max_new_tokens = 1024
 
 [models.judge]
-provider = "openai"
-name = "gpt-4.1"
+provider = "prometheus"
+name = "prometheus-eval/prometheus-2-7b"
 temperature = 0.3
 num_samples = 2
 
 [models.judge.options]
-max_output_tokens = 900
 top_p = 0.9
-seed = 17
-
-[models.judge.pairwise]
-enabled = true
-provider = "anthropic"
-name = "claude-4.5-sonnet"
-temperature = 0.3
-num_samples = 1
-margin = 0.08
-adjustment = 0.12
-center = 0.5
-
-[models.judge.pairwise.options]
-max_output_tokens = 600
+max_new_tokens = 768
 
 [pipeline]
-batch_size = 10
+batch_size = 6
 dedup_threshold = 0.9
 validation_strict = true
 triage_labels = true
@@ -276,3 +222,4 @@ style_variations = [
     "fakeStories",
     "normal professional post"
 ]
+
